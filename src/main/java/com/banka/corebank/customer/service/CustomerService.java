@@ -1,13 +1,13 @@
 package com.banka.corebank.customer.service;
 
-import com.banka.corebank.customer.entity.Customer;
+import com.banka.corebank.customer.dto.request.CreateCustomerRequest;
+import com.banka.corebank.customer.dto.response.CustomerResponse;
 
 import java.util.UUID;
 
 public interface CustomerService {
 
-    Customer create(Customer customer);
+    CustomerResponse create(CreateCustomerRequest request);
 
-    Customer findById(UUID id);
+    CustomerResponse findById(UUID id);
 }
-

@@ -1,41 +1,39 @@
-package com.banka.corebank.account.entity;
+package com.banka.corebank.user.entity;
 
-import com.banka.corebank.account.enums.AccountType;
 import com.banka.corebank.customer.entity.Customer;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-@Data
 @Entity
-@Table(name = "accounts")
-public class Account {
+@Table(name = "users")
+@Getter
+@Setter
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
-    private String accountNumber;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AccountType type;
+    @Column(nullable = false, unique = true)
+    private String email;
 
     @Column(nullable = false)
-    private BigDecimal balance;
+    private String password;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
+    @Column(nullable = false)
+    private String role; // For now a String: ADMIN, CUSTOMER, TELLER
+
+    @OneToOne
+    @JoinColumn(name = "customer_id")
     private Customer customer;
 
     @CreationTimestamp
-    @Column(updatable = false)
     private Instant createdAt;
 
     @UpdateTimestamp

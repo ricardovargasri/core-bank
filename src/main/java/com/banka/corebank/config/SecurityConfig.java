@@ -14,6 +14,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Disable CSRF for testing POST requests
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/customers/**").permitAll() // Allow customer endpoints
+                        .requestMatchers("/api/v1/accounts/**").permitAll() // Allow account endpoints
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll() // Allow
+                                                                                                              // Swagger
                         .anyRequest().authenticated());
         return http.build();
     }

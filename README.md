@@ -10,35 +10,51 @@ El sistema sigue el patrón de **Capas (Layered Architecture)** para separar res
 2.  **Service (Business Layer)**: Contiene la lógica de negocio (validaciones, cálculos, orquestación). Usa **Mappers** para convertir DTOs a Entidades.
 3.  **Repository (Data Layer)**: Interactúa con la base de datos (PostgreSQL) usando Spring Data JPA.
 4.  **Entity (Domain Layer)**: Representa las tablas de la base de datos.
+5.  **DTO (Data Transfer Object)**: Objetos para el transporte de datos entre capas.
 
-## 🚀 Módulos Actuales
+## 📊 Flujo de Datos y Arquitectura
+
+```mermaid
+graph TD
+    User((Usuario/API Client)) -->|JSON| Controller[Controllers]
+    Controller -->|DTO| Service[Services]
+    Service -->|Entities| Repository[Repositories]
+    Repository -->|SQL| DB[(PostgreSQL)]
+    
+    Service -.->|Usa| Mapper[Mappers]
+    CustomerService -->|Orquesta| AccountService[AccountService]
+```
+
+## 📖 Documentación Interactiva (Swagger)
+
+El proyecto cuenta con **Swagger UI** para explorar y probar los endpoints de forma interactiva.
+
+*   **URL**: `http://localhost:8080/swagger-ui.html`
+*   **Vistazo rápido**: Podrás ver los modelos de datos (DTOs) y ejecutar peticiones directamente desde el navegador.
+
+## 🚀 Módulos y Funcionalidades Logradas
 
 ### 1. Customer (Clientes)
-Gestiona la información personal de los dueños de las cuentas.
-*   **Entidad**: `Customer` (Nombre, Email, Fechas).
-*   **Funcionalidad**: Registro y Consulta de perfil.
-*   **DTOs**: `CreateCustomerRequest`, `CustomerResponse`.
+*   **Identidad**: Gestiona información personal con campos obligatorios y únicos (`name`, `email`, `documentId`).
+*   **API**: Implementación total con DTOs y Mappers.
+*   **Integración**: Al registrar un cliente, se dispara automáticamente la creación de su primera cuenta.
 
 ### 2. Account (Cuentas)
-Gestiona los productos financieros del cliente.
-*   **Entidad**: `Account` (Número de cuenta, Saldo, Relación con Customer).
-*   **Estado**: *En desarrollo (Entidad creada).*
+*   **Tipos**: Soporte para `SAVINGS` y `CHECKING` mediante Enums.
+*   **Seguridad y Reglas**:
+    *   Generación de números de cuenta únicos de **4 dígitos**.
+    *   **Restricción de tiempo**: 5 días para Ahorros y 24 horas para Corrientes.
+*   **Transaccionalidad**: Uso de `@Transactional` para asegurar la integridad registro-cuenta.
 
-## 🔐 Plan de Seguridad y Flujo de Usuario
+## 🚧 Tareas Pendientes
 
-El sistema implementará un flujo seguro de autenticación y autorización:
-
-1.  **Registro (`/api/auth/register`)**:
-    *   Crea el **Usuario** (Auth) y el **Cliente** (Datos personales) en una sola transacción.
-
-2.  **Login (`/api/auth/login`)**:
-    *   Valida credenciales (Email/Password) y emite un **Token JWT**.
-
-3.  **Dashboard de Usuario**:
-    *   El usuario consulta sus productos (`/api/customers/me/accounts`).
-    *   **Lógica Inteligente**:
-        *   Si tiene 1 cuenta ➔ Muestra saldo y movimientos.
-        *   Si tiene varias ➔ Muestra lista para seleccionar.
+1.  **Dashboard de Cuenta**:
+    *   [ ] Listar todas las cuentas de un cliente.
+2.  **Módulo de Transacciones**:
+    *   [ ] **Depósitos**: Carga de saldo autorizada.
+    *   [ ] **Transferencias**: Lógica atómica con validación de saldo.
+3.  **Seguridad Avanzada**:
+    *   [ ] Implementar JWT y Roles de usuario.
 
 ## 🛠 Tecnologías
 *   **Java 17**

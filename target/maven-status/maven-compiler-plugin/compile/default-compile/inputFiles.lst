@@ -8,6 +8,9 @@
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/account/repository/AccountRepository.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/account/service/AccountService.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/account/service/impl/AccountServiceImpl.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/config/ApplicationConfig.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/config/JwtAuthenticationFilter.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/config/JwtService.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/config/SecurityConfig.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/customer/controller/CustomerController.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/customer/dto/request/CreateCustomerRequest.java
@@ -18,3 +21,13 @@
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/customer/service/CustomerService.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/customer/service/impl/CustomerServiceImpl.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/exception/ResourceNotFoundException.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/controller/AuthController.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/dto/request/LoginRequest.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/dto/request/RegisterRequest.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/dto/response/AuthResponse.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/entity/User.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/enums/UserRole.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/mapper/UserMapper.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/repository/UserRepository.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/service/UserService.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/service/impl/UserServiceImpl.java

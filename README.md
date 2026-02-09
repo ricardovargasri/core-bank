@@ -46,6 +46,12 @@ El proyecto cuenta con **Swagger UI** para explorar y probar los endpoints de fo
     *   **Restricción de tiempo**: 5 días para Ahorros y 24 horas para Corrientes.
 *   **Transaccionalidad**: Uso de `@Transactional` para asegurar la integridad registro-cuenta.
 
+### 3. User & Auth (Seguridad)
+*   **JWT (JSON Web Token)**: Implementación completa de autenticación stateless.
+*   **BCrypt**: Encriptación profesional de contraseñas.
+*   **Relación User-Customer**: Separación de credenciales (User) y datos de negocio (Customer) con vinculación `1:1`.
+*   **Filtros de Seguridad**: `JwtAuthenticationFilter` para proteger rutas privadas.
+
 ## 🚧 Tareas Pendientes
 
 1.  **Dashboard de Cuenta**:
@@ -54,11 +60,13 @@ El proyecto cuenta con **Swagger UI** para explorar y probar los endpoints de fo
     *   [ ] **Depósitos**: Carga de saldo autorizada.
     *   [ ] **Transferencias**: Lógica atómica con validación de saldo.
 3.  **Seguridad Avanzada**:
-    *   [ ] Implementar JWT y Roles de usuario.
+    *   [x] Implementar JWT y Roles de usuario.
+    *   [ ] Implementar **Refresh Tokens** y Rotación.
 
 ## 🛠 Tecnologías
 *   **Java 17**
 *   **Spring Boot 3**
-*   **Spring Data JPA**
+*   **Spring Security**
+*   **JJWT (JSON Web Token)**
 *   **PostgreSQL**
-*   **Lombok** & **Records** (Java 14+)
+*   **Lombok** & **Records**

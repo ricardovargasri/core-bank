@@ -10,29 +10,52 @@ import com.banka.corebank.account.service.AccountService;
 import com.banka.corebank.customer.entity.Customer;
 import com.banka.corebank.customer.repository.CustomerRepository;
 import com.banka.corebank.exception.ResourceNotFoundException;
+import com.banka.corebank.user.entity.User;
+import com.banka.corebank.user.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
     private final CustomerRepository customerRepository;
+    private final UserRepository userRepository; // Added
     private final AccountMapper accountMapper;
     private final Random random = new Random();
 
     public AccountServiceImpl(AccountRepository accountRepository,
             CustomerRepository customerRepository,
+            UserRepository userRepository, // Added
             AccountMapper accountMapper) {
         this.accountRepository = accountRepository;
         this.customerRepository = customerRepository;
+        this.userRepository = userRepository;
         this.accountMapper = accountMapper;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<AccountResponse> getMyAccounts(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getCustomer() == null) {
+            return List.of();
+        }
+
+        return accountRepository.findAllByCustomer(user.getCustomer())
+                .stream()
+                .map(accountMapper::toResponse)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -50,6 +73,21 @@ public class AccountServiceImpl implements AccountService {
         validateCreationRestriction(customer, request.type());
 
         return createAccount(customer, request.type(), BigDecimal.ZERO);
+    }
+
+    @Override
+    @Transactional
+    public AccountResponse createNewAccountForUser(String email, CreateAccountRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getCustomer() == null) {
+            throw new RuntimeException("User has no associated customer profile");
+        }
+
+        validateCreationRestriction(user.getCustomer(), request.type());
+
+        return createAccount(user.getCustomer(), request.type(), BigDecimal.ZERO);
     }
 
     private AccountResponse createAccount(Customer customer, AccountType type, BigDecimal initialBalance) {

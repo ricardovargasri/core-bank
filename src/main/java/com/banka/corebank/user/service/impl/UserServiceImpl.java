@@ -67,6 +67,16 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        // 0. Manual validation for early failure
+        if (request.email() == null || request.email().isBlank() ||
+                request.password() == null || request.password().isBlank() ||
+                request.firstName() == null || request.firstName().isBlank() ||
+                request.lastName() == null || request.lastName().isBlank() ||
+                request.documentId() == null || request.documentId().isBlank()) {
+            throw new com.banka.corebank.exception.BusinessException(
+                    "All registration fields are required and cannot be empty.");
+        }
+
         // 1. Map DTO to User entity
         User user = userMapper.toEntity(request);
 
@@ -75,11 +85,10 @@ public class UserServiceImpl implements UserService {
 
         // 3. Create Customer (Business Data)
         String fullName = request.firstName() + " " + request.lastName();
-        String fullDocumentId = request.documentType() + ":" + request.documentNumber();
 
         CreateCustomerRequest customerRequest = new CreateCustomerRequest(
                 fullName,
-                fullDocumentId,
+                request.documentId(),
                 request.email());
 
         CustomerResponse customerResponse = customerService.create(customerRequest);

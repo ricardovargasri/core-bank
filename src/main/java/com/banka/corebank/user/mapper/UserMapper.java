@@ -25,10 +25,16 @@ public class UserMapper {
      * Token is usually passed separately or injected by the service.
      */
     public AuthResponse toResponse(User user, String token) {
+        String firstName = "Usuario";
+        if (user.getCustomer() != null && user.getCustomer().getName() != null) {
+            firstName = user.getCustomer().getName().split(" ")[0];
+        }
+
         return new AuthResponse(
                 token,
                 "fake-refresh-token", // Placeholder
                 user.getEmail(),
+                firstName,
                 user.getRole());
     }
 }

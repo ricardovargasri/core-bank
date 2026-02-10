@@ -11,6 +11,7 @@
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/config/ApplicationConfig.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/config/JwtAuthenticationFilter.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/config/JwtService.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/config/OpenApiConfig.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/config/SecurityConfig.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/customer/controller/CustomerController.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/customer/dto/request/CreateCustomerRequest.java
@@ -20,7 +21,18 @@
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/customer/repository/CustomerRepository.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/customer/service/CustomerService.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/customer/service/impl/CustomerServiceImpl.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/exception/BusinessException.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/exception/GlobalExceptionHandler.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/exception/ResourceNotFoundException.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/transaction/controller/TransactionController.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/transaction/dto/request/DepositRequest.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/transaction/dto/request/TransferRequest.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/transaction/dto/response/TransactionResponse.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/transaction/entity/Transaction.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/transaction/enums/TransactionType.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/transaction/repository/TransactionRepository.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/transaction/service/TransactionService.java
+/home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/transaction/service/impl/TransactionServiceImpl.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/controller/AuthController.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/dto/request/LoginRequest.java
 /home/usuario/Documentos/core-bank/src/main/java/com/banka/corebank/user/dto/request/RegisterRequest.java

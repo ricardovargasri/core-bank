@@ -148,3 +148,97 @@ body {
     margin-left: 80px;
   }
 }
+
+/* Data Table Styles */
+.transaction-history {
+  margin-top: 30px;
+  width: 100%;
+}
+
+.transaction-history h3 {
+  margin-bottom: 20px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 8px;
+  /* Espacio entre filas */
+}
+
+.data-table th {
+  text-align: left;
+  padding: 12px 20px;
+  color: var(--text-dim);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.data-table td {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 16px 20px;
+  font-size: 0.95rem;
+}
+
+.data-table tr td:first-child {
+  border-radius: 12px 0 0 12px;
+}
+
+.data-table tr td:last-child {
+  border-radius: 0 12px 12px 0;
+}
+
+.amount-col {
+  text-align: right;
+  font-family: 'Inter', monospace;
+  /* Para que los números alineen bien */
+}
+
+.positive {
+  color: var(--success);
+}
+
+.negative {
+  color: var(--error);
+}
+
+.text-neutral {
+  color: var(--text-dim);
+}
+
+/* Badges */
+.badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge.deposit {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--success);
+}
+
+.badge.transfer_in {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent);
+}
+
+.badge.transfer_out {
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--error);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 20px;
+  border: 1px dashed var(--glass-border);
+  color: var(--text-dim);
+  margin-top: 20px;
+}

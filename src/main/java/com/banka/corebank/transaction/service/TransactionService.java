@@ -10,4 +10,8 @@ public interface TransactionService {
     TransactionResponse deposit(DepositRequest request, String userEmail);
 
     List<TransactionResponse> transfer(TransferRequest request, String userEmail);
+
+    List<TransactionResponse> getAccountHistory(String accountNumber, String userEmail);
+
+    List<TransactionResponse> getAccountHistoryForAdmin(String accountNumber);
 }

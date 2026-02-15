@@ -2,16 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { bankService } from '../services/api';
 import TransactionModal from './TransactionModal';
 import CreateAccountModal from './CreateAccountModal';
+import TransactionTable from './TransactionTable';
 
 const Dashboard = ({ onLogout }) => {
     const [accounts, setAccounts] = useState([]);
     const [activeAccountIdx, setActiveAccountIdx] = useState(0);
+    const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [user, setUser] = useState(null);
     const [modalConfig, setModalConfig] = useState({ isOpen: false, type: 'deposit' });
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [showBalance, setShowBalance] = useState(true);
 
+    // 1. Fetch User & Accounts on Mount
     const fetchData = async () => {
         try {
             const userData = JSON.parse(localStorage.getItem('banka_user'));
@@ -25,6 +28,23 @@ const Dashboard = ({ onLogout }) => {
         }
     };
 
+    // 2. Fetch Transactions whenever Active Account Changes
+    useEffect(() => {
+        if (accounts.length > 0) {
+            const fetchTransactions = async () => {
+                try {
+                    const activeAcc = accounts[activeAccountIdx];
+                    const txData = await bankService.getTransactions(activeAcc.accountNumber);
+                    setTransactions(txData);
+                } catch (error) {
+                    console.error("Error loading transactions:", error);
+                    setTransactions([]);
+                }
+            };
+            fetchTransactions();
+        }
+    }, [activeAccountIdx, accounts]);
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -35,6 +55,12 @@ const Dashboard = ({ onLogout }) => {
 
     const handleTransactionSuccess = () => {
         fetchData(); // Refresh balances
+        // Force refresh transactions for current account
+        if (accounts[activeAccountIdx]) {
+            bankService.getTransactions(accounts[activeAccountIdx].accountNumber)
+                .then(setTransactions)
+                .catch(console.error);
+        }
     };
 
     const activeAccount = accounts[activeAccountIdx];
@@ -102,21 +128,40 @@ const Dashboard = ({ onLogout }) => {
                     <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '30px', width: '100%', maxWidth: '1000px' }}>
                         {/* Account Highlight Card */}
                         <div className="glass-card" style={{
-                            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.3))',
+                            background: activeAccount.active
+                                ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.3))'
+                                : 'linear-gradient(135deg, rgba(80, 80, 80, 0.3), rgba(50, 50, 50, 0.3))',
                             position: 'relative',
-                            overflow: 'hidden'
+                            overflow: 'hidden',
+                            filter: activeAccount.active ? 'none' : 'grayscale(100%)',
+                            opacity: activeAccount.active ? 1 : 0.7
                         }}>
                             <div style={{ position: 'relative', zIndex: 1 }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                                     <p style={{ color: 'var(--text-dim)', fontSize: '14px' }}>
                                         Saldo Disponible - {activeAccount.type === 'SAVINGS' ? 'Cuenta de Ahorros' : 'Cuenta Corriente'}
                                     </p>
-                                    <button
-                                        onClick={() => setShowBalance(!showBalance)}
-                                        style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', cursor: 'pointer', padding: '8px', borderRadius: '10px', display: 'flex', alignItems: 'center' }}
-                                    >
-                                        {showBalance ? <EyeIcon /> : <EyeOffIcon />}
-                                    </button>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                        {!activeAccount.active && (
+                                            <span style={{
+                                                background: 'var(--error)',
+                                                color: 'white',
+                                                padding: '2px 8px',
+                                                borderRadius: '4px',
+                                                fontSize: '10px',
+                                                fontWeight: 'bold',
+                                                letterSpacing: '1px'
+                                            }}>
+                                                BLOQUEADA
+                                            </span>
+                                        )}
+                                        <button
+                                            onClick={() => setShowBalance(!showBalance)}
+                                            style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', cursor: 'pointer', padding: '8px', borderRadius: '10px', display: 'flex', alignItems: 'center' }}
+                                        >
+                                            {showBalance ? <EyeIcon /> : <EyeOffIcon />}
+                                        </button>
+                                    </div>
                                 </div>
                                 <h2 style={{ fontSize: '56px', fontWeight: '800', marginBottom: '30px' }}>
                                     {showBalance ? `$${activeAccount.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '••••••••'}
@@ -131,22 +176,29 @@ const Dashboard = ({ onLogout }) => {
                         {/* Quick Actions Panel */}
                         <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px', justifyContent: 'center' }}>
                             <h3 style={{ fontSize: '18px', marginBottom: '10px' }}>Acciones Rápidas</h3>
-                            <button className="btn-primary" onClick={() => handleOpenModal('transfer')} style={{ padding: '20px', fontSize: '16px' }}>
-                                Nueva Transferencia
+                            <button
+                                className="btn-primary"
+                                onClick={() => handleOpenModal('transfer')}
+                                disabled={!activeAccount.active}
+                                style={{
+                                    padding: '20px',
+                                    fontSize: '16px',
+                                    opacity: activeAccount.active ? 1 : 0.5,
+                                    cursor: activeAccount.active ? 'pointer' : 'not-allowed'
+                                }}
+                            >
+                                {activeAccount.active ? 'Nueva Transferencia' : 'Cuenta Bloqueada'}
                             </button>
-                            <button className="btn-primary" onClick={() => handleOpenModal('deposit')} style={{ padding: '20px', fontSize: '16px', background: 'var(--accent)', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)' }}>
-                                Hacer Depósito
-                            </button>
+                            {user?.role !== 'USER' && (
+                                <button className="btn-primary" onClick={() => handleOpenModal('deposit')} style={{ padding: '20px', fontSize: '16px', background: 'var(--accent)', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)' }}>
+                                    Hacer Depósito
+                                </button>
+                            )}
                         </div>
 
                         {/* Transactions Section */}
                         <div className="glass-card" style={{ gridColumn: 'span 2' }}>
-                            <h3 style={{ marginBottom: '24px' }}>Movimientos Recientes</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                <p style={{ color: 'var(--text-dim)', textAlign: 'center', padding: '40px' }}>
-                                    Aún no tienes movimientos registrados en esta cuenta.
-                                </p>
-                            </div>
+                            <TransactionTable transactions={transactions} />
                         </div>
                     </div>
                 ) : (

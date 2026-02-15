@@ -5,11 +5,13 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.UUID;
 
-public record AccountResponse(
+public record AdminAccountResponse(
                 UUID id,
                 String accountNumber,
                 AccountType type,
                 BigDecimal balance,
                 Instant createdAt,
+                String ownerName,
+                String ownerEmail,
                 boolean active) {
 }

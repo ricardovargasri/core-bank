@@ -2,6 +2,7 @@ package com.banka.corebank.account.service;
 
 import com.banka.corebank.account.dto.request.CreateAccountRequest;
 import com.banka.corebank.account.dto.response.AccountResponse;
+import com.banka.corebank.account.dto.response.AdminAccountResponse;
 import com.banka.corebank.customer.entity.Customer;
 
 import java.util.List;
@@ -16,4 +17,10 @@ public interface AccountService {
     AccountResponse createNewAccountForUser(String email, CreateAccountRequest request);
 
     List<AccountResponse> getMyAccounts(String email);
+
+    List<AdminAccountResponse> getAllAccounts();
+
+    void deactivateAccount(UUID accountId);
+
+    void activateAccount(UUID accountId);
 }

@@ -47,21 +47,19 @@ El proyecto cuenta con **Swagger UI** para explorar y probar los endpoints de fo
 *   **Transaccionalidad**: Uso de `@Transactional` para asegurar la integridad registro-cuenta.
 
 ### 3. User & Auth (Seguridad)
-*   **JWT (JSON Web Token)**: Implementación completa de autenticación stateless.
+*   **RBAC (Role Based Access Control)**: Diferenciación entre `ADMIN`, `TELLER` y `USER`.
+*   **JWT (JSON Web Token)**: Implementación completa de autenticación stateless con Access y Refresh Tokens.
 *   **BCrypt**: Encriptación profesional de contraseñas.
 *   **Relación User-Customer**: Separación de credenciales (User) y datos de negocio (Customer) con vinculación `1:1`.
-*   **Filtros de Seguridad**: `JwtAuthenticationFilter` para proteger rutas privadas.
 
-## 🚧 Tareas Pendientes
+## 🛡 Próximas Reglas de Negocio (Roadmap)
 
-1.  **Dashboard de Cuenta**:
-    *   [ ] Listar todas las cuentas de un cliente.
-2.  **Módulo de Transacciones**:
-    *   [ ] **Depósitos**: Carga de saldo autorizada.
-    *   [ ] **Transferencias**: Lógica atómica con validación de saldo.
-3.  **Seguridad Avanzada**:
-    *   [x] Implementar JWT y Roles de usuario.
-    *   [ ] Implementar **Refresh Tokens** y Rotación.
+1.  **Restricción de Depósitos**: Los usuarios (`USER`) pronto perderán la capacidad de depositarse dinero a sí mismos. Todo flujo de efectivo entrante deberá ser gestionado por un **Cajero (`TELLER`)**.
+2.  **Rol Cajero (TELLER)**:
+    *   [ ] Vista global de todas las cuentas por DNI.
+    *   [ ] Capacidad de realizar depósitos autorizados.
+3.  **Dashboard Administrativo**:
+    *   [ ] Gestión de usuarios y auditoría de transacciones bank-wide.
 
 ## 🛠 Tecnologías
 *   **Java 17**

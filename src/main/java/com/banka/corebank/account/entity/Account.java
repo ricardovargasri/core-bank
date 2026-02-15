@@ -38,6 +38,9 @@ public class Account {
     @Column(updatable = false)
     private Instant createdAt;
 
+    @Column(nullable = false)
+    private boolean active = true;
+
     @UpdateTimestamp
     private Instant updatedAt;
 }

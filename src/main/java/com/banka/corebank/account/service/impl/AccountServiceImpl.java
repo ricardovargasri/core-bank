@@ -2,6 +2,7 @@ package com.banka.corebank.account.service.impl;
 
 import com.banka.corebank.account.dto.request.CreateAccountRequest;
 import com.banka.corebank.account.dto.response.AccountResponse;
+import com.banka.corebank.account.dto.response.AdminAccountResponse;
 import com.banka.corebank.account.entity.Account;
 import com.banka.corebank.account.enums.AccountType;
 import com.banka.corebank.account.mapper.AccountMapper;
@@ -59,9 +60,19 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
+    public List<AdminAccountResponse> getAllAccounts() {
+        return accountRepository.findAll()
+                .stream()
+                .map(accountMapper::toAdminResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Override
     @Transactional
     public AccountResponse createInitialAccount(Customer customer) {
-        return createAccount(customer, AccountType.SAVINGS, BigDecimal.ZERO);
+        Account account = new Account();
+        account.setType(AccountType.SAVINGS);
+        return createAccount(account, customer, BigDecimal.ZERO);
     }
 
     @Override
@@ -72,7 +83,8 @@ public class AccountServiceImpl implements AccountService {
 
         validateCreationRestriction(customer, request.type());
 
-        return createAccount(customer, request.type(), BigDecimal.ZERO);
+        Account account = accountMapper.toEntity(request);
+        return createAccount(account, customer, BigDecimal.ZERO);
     }
 
     @Override
@@ -87,13 +99,12 @@ public class AccountServiceImpl implements AccountService {
 
         validateCreationRestriction(user.getCustomer(), request.type());
 
-        return createAccount(user.getCustomer(), request.type(), BigDecimal.ZERO);
+        Account account = accountMapper.toEntity(request);
+        return createAccount(account, user.getCustomer(), BigDecimal.ZERO);
     }
 
-    private AccountResponse createAccount(Customer customer, AccountType type, BigDecimal initialBalance) {
-        Account account = new Account();
+    private AccountResponse createAccount(Account account, Customer customer, BigDecimal initialBalance) {
         account.setAccountNumber(generateUniqueAccountNumber());
-        account.setType(type);
         account.setBalance(initialBalance);
         account.setCustomer(customer);
 
@@ -122,5 +133,23 @@ public class AccountServiceImpl implements AccountService {
             number = String.format("%04d", random.nextInt(10000));
         } while (accountRepository.existsByAccountNumber(number));
         return number;
+    }
+
+    @Override
+    @Transactional
+    public void deactivateAccount(UUID accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+        account.setActive(false);
+        accountRepository.save(account);
+    }
+
+    @Override
+    @Transactional
+    public void activateAccount(UUID accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+        account.setActive(true);
+        accountRepository.save(account);
     }
 }

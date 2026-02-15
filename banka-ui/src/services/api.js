@@ -66,6 +66,32 @@ export const bankService = {
         return response.json();
     },
 
+    async getAllAccounts() {
+        const response = await fetch(`${API_URL}/admin/accounts`, {
+            headers: {
+                'Authorization': `Bearer ${authService.getToken()}`,
+            },
+        });
+        if (!response.ok) throw new Error('Could not fetch accounts');
+        return response.json();
+    },
+
+    async adminDeposit(data) {
+        const response = await fetch(`${API_URL}/admin/deposit`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authService.getToken()}`,
+            },
+            body: JSON.stringify(data),
+        });
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || 'Deposit failed');
+        }
+        return response.json();
+    },
+
     async deposit(depositData) {
         const response = await fetch(`${API_URL}/transactions/deposit`, {
             method: 'POST',
@@ -112,5 +138,37 @@ export const bankService = {
             throw new Error(error.message || 'Error creating account');
         }
         return response.json();
+    },
+
+    async getTransactions(accountNumber) {
+        const response = await fetch(`${API_URL}/transactions/account/${accountNumber}`, {
+            headers: {
+                'Authorization': `Bearer ${authService.getToken()}`,
+            },
+        });
+        if (!response.ok) throw new Error('Could not fetch transactions');
+        return response.json();
+    },
+
+    async deactivateAccount(accountId) {
+        const response = await fetch(`${API_URL}/admin/accounts/${accountId}/deactivate`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${authService.getToken()}`,
+            },
+        });
+        if (!response.ok) throw new Error('Could not deactivate account');
+        return true;
+    },
+
+    async activateAccount(accountId) {
+        const response = await fetch(`${API_URL}/admin/accounts/${accountId}/activate`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${authService.getToken()}`,
+            },
+        });
+        if (!response.ok) throw new Error('Could not activate account');
+        return true;
     }
 };

@@ -52,14 +52,22 @@ El proyecto cuenta con **Swagger UI** para explorar y probar los endpoints de fo
 *   **BCrypt**: Encriptación profesional de contraseñas.
 *   **Relación User-Customer**: Separación de credenciales (User) y datos de negocio (Customer) con vinculación `1:1`.
 
-## 🛡 Próximas Reglas de Negocio (Roadmap)
+### 4. Admin & Teller Dashboard (Nuevo 🚀)
+*   **Búsqueda Global**: Localización de clientes por email, nombre o número de cuenta.
+*   **Operaciones de Caja**:
+    *   **Depósitos**: Interfaz exclusiva para Cajeros/Admins para realizar ingresos.
+    *   **Historial**: Visualización completa de movimientos de cualquier cuenta.
+*   **Gestión de Estados**:
+    *   **Bloqueo/Desbloqueo**: Funcionalidad para congelar cuentas instantáneamente.
+    *   **Seguridad Reforzada**: El backend rechaza *cualquier* transacción (entrante o saliente) en cuentas bloqueadas.
+*   **UI Reactiva**:
+    *   Indicadores visuales de estado (Grayscale para cuentas bloqueadas).
+    *   Botones de acción contextuales.
 
-1.  **Restricción de Depósitos**: Los usuarios (`USER`) pronto perderán la capacidad de depositarse dinero a sí mismos. Todo flujo de efectivo entrante deberá ser gestionado por un **Cajero (`TELLER`)**.
-2.  **Rol Cajero (TELLER)**:
-    *   [ ] Vista global de todas las cuentas por DNI.
-    *   [ ] Capacidad de realizar depósitos autorizados.
-3.  **Dashboard Administrativo**:
-    *   [ ] Gestión de usuarios y auditoría de transacciones bank-wide.
+## 🛡 Roadmap y Próximos Pasos
+
+1.  **Reportes Avanzados**: Exportación de extractos en PDF.
+2.  **Notificaciones**: Alertas por email ante movimientos sospechosos.
 
 ## 🛠 Tecnologías
 *   **Java 17**

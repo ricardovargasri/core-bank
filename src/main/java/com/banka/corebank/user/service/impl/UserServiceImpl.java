@@ -1,6 +1,7 @@
 package com.banka.corebank.user.service.impl;
 
 import com.banka.corebank.config.JwtService;
+import com.banka.corebank.config.validation.PasswordValidator;
 import com.banka.corebank.customer.dto.request.CreateCustomerRequest;
 import com.banka.corebank.customer.dto.response.CustomerResponse;
 import com.banka.corebank.customer.entity.Customer;
@@ -33,6 +34,7 @@ public class UserServiceImpl implements UserService {
         private final PasswordEncoder passwordEncoder;
         private final JwtService jwtService;
         private final AuthenticationManager authenticationManager; // Added
+        private final PasswordValidator passwordValidator;
 
         public UserServiceImpl(UserRepository userRepository,
                         CustomerRepository customerRepository,
@@ -40,7 +42,8 @@ public class UserServiceImpl implements UserService {
                         UserMapper userMapper,
                         PasswordEncoder passwordEncoder,
                         JwtService jwtService,
-                        AuthenticationManager authenticationManager) { // Added
+                        AuthenticationManager authenticationManager,
+                        PasswordValidator passwordValidator) {
                 this.userRepository = userRepository;
                 this.customerRepository = customerRepository;
                 this.customerService = customerService;
@@ -48,6 +51,7 @@ public class UserServiceImpl implements UserService {
                 this.passwordEncoder = passwordEncoder;
                 this.jwtService = jwtService;
                 this.authenticationManager = authenticationManager;
+                this.passwordValidator = passwordValidator;
         }
 
         @Override
@@ -71,15 +75,11 @@ public class UserServiceImpl implements UserService {
         @Override
         @Transactional
         public AuthResponse register(RegisterRequest request) {
-                // 0. Manual validation for early failure
-                if (request.email() == null || request.email().isBlank() ||
-                                request.password() == null || request.password().isBlank() ||
-                                request.firstName() == null || request.firstName().isBlank() ||
-                                request.lastName() == null || request.lastName().isBlank() ||
-                                request.documentId() == null || request.documentId().isBlank()) {
-                        throw new com.banka.corebank.exception.BusinessException(
-                                        "All registration fields are required and cannot be empty.");
-                }
+                passwordValidator.validate(
+                                request.password(),
+                                request.firstName(),
+                                request.lastName(),
+                                request.email());
 
                 // 1. Map DTO to User entity
                 User user = userMapper.toEntity(request);

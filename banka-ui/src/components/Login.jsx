@@ -5,17 +5,30 @@ const Login = ({ onLoginSuccess, onGoToRegister }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setFieldErrors({});
         setLoading(true);
         try {
             await authService.login(email, password);
             onLoginSuccess();
         } catch (err) {
-            setError(err.message);
+            if (err?.errors && Array.isArray(err.errors)) {
+                const nextFieldErrors = {};
+                err.errors.forEach((e) => {
+                    if (e?.field) {
+                        nextFieldErrors[e.field] = e.message;
+                    }
+                });
+                setFieldErrors(nextFieldErrors);
+                setError(err.message);
+            } else {
+                setError(err.message);
+            }
         } finally {
             setLoading(false);
         }
@@ -37,6 +50,9 @@ const Login = ({ onLoginSuccess, onGoToRegister }) => {
                             required
                             style={{ padding: '14px', fontSize: '16px', borderRadius: '12px', border: '1px solid var(--glass-border)', background: 'var(--glass)', color: 'white', outline: 'none' }}
                         />
+                        {fieldErrors.email && (
+                            <p style={{ color: 'var(--error)', fontSize: '12px' }}>{fieldErrors.email}</p>
+                        )}
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -49,6 +65,9 @@ const Login = ({ onLoginSuccess, onGoToRegister }) => {
                             required
                             style={{ padding: '14px', fontSize: '16px', borderRadius: '12px', border: '1px solid var(--glass-border)', background: 'var(--glass)', color: 'white', outline: 'none' }}
                         />
+                        {fieldErrors.password && (
+                            <p style={{ color: 'var(--error)', fontSize: '12px' }}>{fieldErrors.password}</p>
+                        )}
                     </div>
 
                     {error && <p style={{ color: 'var(--error)', fontSize: '14px', textAlign: 'center' }}>{error}</p>}

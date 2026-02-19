@@ -30,71 +30,86 @@ public class TransactionServiceImpl implements TransactionService {
         private final UserRepository userRepository;
         private final TransactionMapper transactionMapper;
 
+        // Functional Interface for Validation
+        @FunctionalInterface
+        private interface ValidationRule<T> {
+                void validate(T t);
+        }
+
         @Override
         @Transactional
         public List<TransactionResponse> transfer(TransferRequest request, String userEmail) {
-                // 1. Validations
-                if (request.amount().compareTo(BigDecimal.ZERO) <= 0) {
-                        throw new BusinessException("Transfer amount must be greater than zero");
-                }
-
-                if (request.sourceAccountNumber().equals(request.destinationAccountNumber())) {
-                        throw new BusinessException("Source and destination accounts must be different");
-                }
-
-                // 2. Find Accounts
+                // 1. Find Actors (Data Fetching)
                 Account sourceAccount = accountRepository.findByAccountNumber(request.sourceAccountNumber())
                                 .orElseThrow(() -> new ResourceNotFoundException("Source account not found"));
-
                 Account destinationAccount = accountRepository.findByAccountNumber(request.destinationAccountNumber())
                                 .orElseThrow(() -> new ResourceNotFoundException("Destination account not found"));
-
-                // NEW: Security Check - Account Status
-                if (!sourceAccount.isActive()) {
-                        throw new BusinessException("Source account is inactive. Transactions are blocked.");
-                }
-                if (!destinationAccount.isActive()) {
-                        throw new BusinessException("Destination account is inactive. Transactions are blocked.");
-                }
-
-                // 3. Check Balance
-                if (sourceAccount.getBalance().compareTo(request.amount()) < 0) {
-                        throw new BusinessException(
-                                        "Insufficient funds in source account. Current balance: "
-                                                        + sourceAccount.getBalance());
-                }
-
-                // 4. Find Performer
                 User performer = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-                // 5. Update Balances
+                // 2. Functional Validations
+                List<ValidationRule<Void>> validators = List.of(
+                                // Basic Input Checks
+                                v -> {
+                                        if (request.amount().compareTo(BigDecimal.ZERO) <= 0)
+                                                throw new BusinessException(
+                                                                "Transfer amount must be greater than zero");
+                                },
+                                v -> {
+                                        if (request.sourceAccountNumber().equals(request.destinationAccountNumber()))
+                                                throw new BusinessException(
+                                                                "Source and destination accounts must be different");
+                                },
+
+                                // Account Status Validations
+                                v -> {
+                                        if (!sourceAccount.isActive())
+                                                throw new BusinessException(
+                                                                "Source account is inactive. Transactions are blocked.");
+                                },
+                                v -> {
+                                        if (!destinationAccount.isActive())
+                                                throw new BusinessException(
+                                                                "Destination account is inactive. Transactions are blocked.");
+                                },
+
+                                // Balance Check
+                                v -> {
+                                        if (sourceAccount.getBalance().compareTo(request.amount()) < 0)
+                                                throw new BusinessException("Insufficient funds. Balance: "
+                                                                + sourceAccount.getBalance());
+                                });
+
+                // Execute all validations
+                validators.forEach(v -> v.validate(null));
+
+                // 3. Execution (Side Effects)
                 sourceAccount.setBalance(sourceAccount.getBalance().subtract(request.amount()));
                 destinationAccount.setBalance(destinationAccount.getBalance().add(request.amount()));
 
                 accountRepository.save(sourceAccount);
                 accountRepository.save(destinationAccount);
 
-                // 6. Create Audit Records (Two sides of the same coin)
-                String description = (request.description() == null || request.description().isBlank())
-                                ? "sin descripcion"
-                                : request.description();
+                // 4. Audit
+                return createTransferAudit(sourceAccount, destinationAccount, request, performer);
+        }
 
-                Transaction outTx = createTransactionRecord(sourceAccount, request.amount(),
-                                TransactionType.TRANSFER_OUT,
-                                description, performer);
-                Transaction inTx = createTransactionRecord(destinationAccount, request.amount(),
-                                TransactionType.TRANSFER_IN,
-                                description, performer);
+        private List<TransactionResponse> createTransferAudit(Account source, Account dest, TransferRequest req,
+                        User performer) {
+                String description = (req.description() == null || req.description().isBlank()) ? "sin descripcion"
+                                : req.description();
 
-                return List.of(
-                                transactionMapper.toResponse(outTx, sourceAccount.getBalance()),
-                                transactionMapper.toResponse(inTx, destinationAccount.getBalance()));
+                Transaction outTx = createTransactionRecord(source, req.amount(), TransactionType.TRANSFER_OUT,
+                                description, performer);
+                Transaction inTx = createTransactionRecord(dest, req.amount(), TransactionType.TRANSFER_IN, description,
+                                performer);
+
+                return List.of(transactionMapper.toResponse(outTx, source.getBalance()),
+                                transactionMapper.toResponse(inTx, dest.getBalance()));
         }
 
         private Transaction createTransactionRecord(Account account, BigDecimal amount, TransactionType type,
-                        String desc,
-                        User performer) {
+                        String desc, User performer) {
                 Transaction tx = new Transaction();
                 tx.setAmount(amount);
                 tx.setType(type);
@@ -107,49 +122,43 @@ public class TransactionServiceImpl implements TransactionService {
         @Override
         @Transactional
         public TransactionResponse deposit(DepositRequest request, String userEmail) {
-                // 1. Validate Amount
-                if (request.amount().compareTo(BigDecimal.ZERO) <= 0) {
-                        throw new BusinessException("Deposit amount must be greater than zero");
-                }
-
-                // 2. Find Account
+                // 1. Find Actors
                 Account account = accountRepository.findByAccountNumber(request.accountNumber())
                                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
-
-                // NEW: Security Check - Account Status
-                if (!account.isActive()) {
-                        throw new BusinessException("Account is inactive. Deposits are blocked.");
-                }
-
-                // 3. Find Performer (Audit)
                 User performer = userRepository.findByEmail(userEmail)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "User performing the transaction not found"));
+                                .orElseThrow(() -> new ResourceNotFoundException("Performer not found"));
 
-                // NEW: Business Rule - Only ADMIN or TELLER can perform deposits
-                if (performer.getRole() == com.banka.corebank.user.enums.UserRole.USER) {
-                        throw new BusinessException("Self-deposits are not allowed. Please visit a Teller.");
-                }
+                // 2. Functional Validations
+                List<ValidationRule<Void>> validators = List.of(
+                                v -> {
+                                        if (request.amount().compareTo(BigDecimal.ZERO) <= 0)
+                                                throw new BusinessException("Deposit amount must be greater than zero");
+                                },
+                                v -> {
+                                        if (!account.isActive())
+                                                throw new BusinessException(
+                                                                "Account is inactive. Deposits are blocked.");
+                                },
+                                v -> {
+                                        if (performer.getRole() == com.banka.corebank.user.enums.UserRole.USER)
+                                                throw new BusinessException(
+                                                                "Self-deposits are not allowed. Please visit a Teller.");
+                                });
 
-                // 4. Update Balance
+                validators.forEach(v -> v.validate(null));
+
+                // 3. Execution
                 account.setBalance(account.getBalance().add(request.amount()));
                 accountRepository.save(account);
 
-                // 5. Create Transaction audit record
+                // 4. Audit
                 String description = (request.description() == null || request.description().isBlank())
                                 ? "sin descripcion"
                                 : request.description();
+                Transaction tx = createTransactionRecord(account, request.amount(), TransactionType.DEPOSIT,
+                                description, performer);
 
-                Transaction transaction = new Transaction();
-                transaction.setAmount(request.amount());
-                transaction.setType(TransactionType.DEPOSIT);
-                transaction.setDescription(description);
-                transaction.setAccount(account);
-                transaction.setPerformedBy(performer);
-
-                Transaction savedTransaction = transactionRepository.save(transaction);
-
-                return transactionMapper.toResponse(savedTransaction, account.getBalance());
+                return transactionMapper.toResponse(tx, account.getBalance());
         }
 
         @Override

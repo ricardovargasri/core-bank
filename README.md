@@ -52,6 +52,51 @@ El proyecto cuenta con **Swagger UI** para explorar y probar los endpoints de fo
 *   **BCrypt**: Encriptación profesional de contraseñas.
 *   **Relación User-Customer**: Separación de credenciales (User) y datos de negocio (Customer) con vinculación `1:1`.
 
+### 5. Políticas de Contraseñas Más Estrictas (Backend + Frontend)
+
+#### Backend
+*   **Validador centralizado**: `PasswordValidator` (Passay) validando en el flujo de registro antes de encriptar con BCrypt.
+*   **Reglas de contraseña**:
+    *   Longitud: **12 a 128** caracteres
+    *   Al menos **1** mayúscula, **1** minúscula, **1** número y **1** carácter especial
+    *   Sin espacios en blanco
+    *   Bloqueo de secuencias comunes (teclado `qwerty` y secuencias numéricas)
+*   **Excepción custom**: `InvalidPasswordException` (hereda de `BusinessException`).
+*   **Validación declarativa**: `@Valid` en `AuthController` y anotaciones de Bean Validation en `RegisterRequest`/`LoginRequest`.
+*   **Manejo consistente de errores (400)**:
+    *   `BusinessException` => `400 BAD_REQUEST` con `message`
+    *   `MethodArgumentNotValidException` => `400 BAD_REQUEST` con `message` y lista `errors[]` por campo
+
+#### Frontend (banka-ui)
+*   **Interpretación de errores del backend**:
+    *   Se conserva `message` y, cuando aplica, el arreglo `errors[]`.
+*   **UI de errores por campo**:
+    *   En `Register` y `Login` se muestran mensajes debajo de cada input según `errors[]`.
+    *   Si el error es general (ej. contraseña no cumple Passay), se muestra el `message` del backend.
+
+## ▶️ Cómo correr el Frontend (banka-ui)
+
+1. Instalar dependencias (solo la primera vez)
+
+    ```bash
+    cd banka-ui
+    npm install
+    ```
+
+2. Levantar Vite
+
+    ```bash
+    npm run dev
+    ```
+
+3. Abrir en el navegador
+
+    *   `http://localhost:5173`
+
+4. Requisito
+
+    *   Backend corriendo en `http://localhost:8080`
+
 ### 4. Admin & Teller Dashboard (Nuevo 🚀)
 *   **Búsqueda Global**: Localización de clientes por email, nombre o número de cuenta.
 *   **Operaciones de Caja**:
@@ -68,6 +113,17 @@ El proyecto cuenta con **Swagger UI** para explorar y probar los endpoints de fo
 
 1.  **Reportes Avanzados**: Exportación de extractos en PDF.
 2.  **Notificaciones**: Alertas por email ante movimientos sospechosos.
+3.  **Mejoras de Seguridad**:
+    - [ ] Implementar políticas de contraseñas más estrictas
+    - [ ] Agregar autenticación de dos factores (2FA)
+    - [ ] Implementar flujo de recuperación de contraseña seguro
+    - [ ] Añadir registro detallado de actividades de autenticación
+    - [ ] Implementar rate limiting en endpoints sensibles
+    - [ ] Añadir lista negra de tokens JWT
+    - [ ] Mejorar mensajes de error para evitar fuga de información
+    - [ ] Implementar detección de patrones sospechosos de inicio de sesión
+    - [ ] Añadir verificación de correo electrónico en el registro
+    - [ ] Implementar gestión de sesiones y dispositivos
 
 ## 🛠 Tecnologías
 *   **Java 17**

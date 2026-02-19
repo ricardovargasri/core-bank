@@ -1,5 +1,21 @@
 const API_URL = 'http://localhost:8080/api/v1';
 
+async function buildApiError(response) {
+    let errorBody = null;
+    try {
+        errorBody = await response.json();
+    } catch (e) {
+        errorBody = null;
+    }
+
+    const message = errorBody?.message || `Request failed with status ${response.status}`;
+    const err = new Error(message);
+    err.status = errorBody?.status ?? response.status;
+    err.errors = errorBody?.errors;
+    err.raw = errorBody;
+    return err;
+}
+
 export const authService = {
     async login(email, password) {
         const response = await fetch(`${API_URL}/auth/login`, {
@@ -9,8 +25,7 @@ export const authService = {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Login failed. Please check your credentials.');
+            throw await buildApiError(response);
         }
 
         const data = await response.json();
@@ -29,8 +44,7 @@ export const authService = {
         });
 
         if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message || 'Registration failed.');
+            throw await buildApiError(response);
         }
 
         const data = await response.json();

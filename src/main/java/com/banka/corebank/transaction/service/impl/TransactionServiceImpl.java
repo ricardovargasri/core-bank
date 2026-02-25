@@ -13,8 +13,11 @@ import com.banka.corebank.transaction.mapper.TransactionMapper;
 import com.banka.corebank.transaction.repository.TransactionRepository;
 import com.banka.corebank.transaction.service.TransactionService;
 import com.banka.corebank.user.entity.User;
-import com.banka.corebank.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import com.banka.corebank.user.enums.UserRole;
+import com.banka.corebank.user.service.UserService;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,13 +25,22 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
         private final TransactionRepository transactionRepository;
         private final AccountRepository accountRepository;
-        private final UserRepository userRepository;
+        private final UserService userService;
         private final TransactionMapper transactionMapper;
+
+        public TransactionServiceImpl(TransactionRepository transactionRepository,
+                        AccountRepository accountRepository,
+                        @Lazy UserService userService,
+                        TransactionMapper transactionMapper) {
+                this.transactionRepository = transactionRepository;
+                this.accountRepository = accountRepository;
+                this.userService = userService;
+                this.transactionMapper = transactionMapper;
+        }
 
         // Functional Interface for Validation
         @FunctionalInterface
@@ -44,8 +56,9 @@ public class TransactionServiceImpl implements TransactionService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Source account not found"));
                 Account destinationAccount = accountRepository.findByAccountNumber(request.destinationAccountNumber())
                                 .orElseThrow(() -> new ResourceNotFoundException("Destination account not found"));
-                User performer = userRepository.findByEmail(userEmail)
-                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+                // Use JIT Provisioning to ensure user exists
+                User performer = userService.syncWithKeycloak(userEmail, null, getCurrentUserRole());
 
                 // 2. Functional Validations
                 List<ValidationRule<Void>> validators = List.of(
@@ -125,8 +138,7 @@ public class TransactionServiceImpl implements TransactionService {
                 // 1. Find Actors
                 Account account = accountRepository.findByAccountNumber(request.accountNumber())
                                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
-                User performer = userRepository.findByEmail(userEmail)
-                                .orElseThrow(() -> new ResourceNotFoundException("Performer not found"));
+                User performer = userService.syncWithKeycloak(userEmail, null, getCurrentUserRole());
 
                 // 2. Functional Validations
                 List<ValidationRule<Void>> validators = List.of(
@@ -140,9 +152,11 @@ public class TransactionServiceImpl implements TransactionService {
                                                                 "Account is inactive. Deposits are blocked.");
                                 },
                                 v -> {
-                                        if (performer.getRole() == com.banka.corebank.user.enums.UserRole.USER)
+                                        // Restrict regular users from making deposits
+                                        if (performer.getRole() == UserRole.USER) {
                                                 throw new BusinessException(
                                                                 "Self-deposits are not allowed. Please visit a Teller.");
+                                        }
                                 });
 
                 validators.forEach(v -> v.validate(null));
@@ -188,6 +202,15 @@ public class TransactionServiceImpl implements TransactionService {
                                 .stream()
                                 .map(tx -> transactionMapper.toResponse(tx, account.getBalance()))
                                 .toList();
+        }
+
+        private UserRole getCurrentUserRole() {
+                Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+                if (auth != null && auth.getAuthorities().stream()
+                                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+                        return UserRole.ADMIN;
+                }
+                return UserRole.USER;
         }
 
 }

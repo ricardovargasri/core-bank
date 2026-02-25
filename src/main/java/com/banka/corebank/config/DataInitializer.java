@@ -6,7 +6,6 @@ import com.banka.corebank.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -15,7 +14,6 @@ import org.springframework.stereotype.Component;
 public class DataInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
 
     @Override
     public void run(String... args) {
@@ -27,7 +25,7 @@ public class DataInitializer implements CommandLineRunner {
         if (userRepository.findByEmail(adminEmail).isEmpty()) {
             User admin = new User();
             admin.setEmail(adminEmail);
-            admin.setPassword(passwordEncoder.encode("admin123"));
+            admin.setPassword("{noop}keycloak-managed");
             admin.setRole(UserRole.ADMIN);
 
             userRepository.save(admin);

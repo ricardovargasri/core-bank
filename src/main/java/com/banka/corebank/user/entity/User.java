@@ -39,7 +39,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private UserRole role;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "customer_id")
     private Customer customer;
 

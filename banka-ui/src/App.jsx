@@ -1,54 +1,62 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-import Login from './components/Login'
-import Register from './components/Register'
+import keycloak from './keycloak'
 import Dashboard from './components/Dashboard'
 import AdminDashboard from './components/AdminDashboard'
-import { authService } from './services/api'
 
 function App() {
-  const [view, setView] = useState('login') // 'login', 'register', 'dashboard', 'admin-dashboard'
-  const [user, setUser] = useState(null)
+  const [authenticated, setAuthenticated] = useState(false)
+  const [init, setInit] = useState(false)
+  const [role, setRole] = useState(null)
+  const [view, setView] = useState('dashboard') // Default view
 
   useEffect(() => {
-    if (authService.isAuthenticated()) {
-      const savedUser = JSON.parse(localStorage.getItem('banka_user'))
-      setUser(savedUser)
-      setView(savedUser?.role === 'ADMIN' ? 'admin-dashboard' : 'dashboard')
-    }
+    keycloak.init({
+      onLoad: 'login-required',
+      checkLoginIframe: false
+    }).then((auth) => {
+      setAuthenticated(auth)
+      setInit(true)
+      if (auth) {
+        // Extract role from Keycloak Token (BankaRealm roles)
+        const isAdmin = keycloak.hasRealmRole('ADMIN')
+        setRole(isAdmin ? 'ADMIN' : 'USER')
+        setView(isAdmin ? 'admin-dashboard' : 'dashboard')
+
+        // Optional: Save minimal info for legacy components if needed
+        localStorage.setItem('banka_token', keycloak.token)
+      }
+    }).catch(err => {
+      console.error("Keycloak Init Error", err)
+      setInit(true)
+    })
   }, [])
 
-  const handleAuthSuccess = () => {
-    const savedUser = JSON.parse(localStorage.getItem('banka_user'))
-    setUser(savedUser)
-    setView(savedUser?.role === 'ADMIN' ? 'admin-dashboard' : 'dashboard')
+  const handleLogout = () => {
+    keycloak.logout()
   }
 
-  const handleLogout = () => {
-    authService.logout()
-    setUser(null)
-    setView('login')
+  if (!init) {
+    return <div className="loading-screen">Cargando Banco...</div>
+  }
+
+  if (!authenticated) {
+    return <div className="error-screen">No se pudo autenticar con el servidor de identidad.</div>
   }
 
   return (
     <div className="App">
-      {view === 'dashboard' && <Dashboard onLogout={handleLogout} />}
+      {view === 'dashboard' && (
+        <Dashboard
+          onLogout={handleLogout}
+          role={role}
+          userInfo={keycloak.tokenParsed}
+        />
+      )}
       {view === 'admin-dashboard' && (
         <AdminDashboard
           onLogout={handleLogout}
           onGoToPersonal={() => setView('dashboard')}
-        />
-      )}
-      {view === 'login' && (
-        <Login
-          onLoginSuccess={handleAuthSuccess}
-          onGoToRegister={() => setView('register')}
-        />
-      )}
-      {view === 'register' && (
-        <Register
-          onRegisterSuccess={handleAuthSuccess}
-          onBackToLogin={() => setView('login')}
         />
       )}
     </div>

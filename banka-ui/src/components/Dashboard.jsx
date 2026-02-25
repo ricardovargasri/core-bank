@@ -4,7 +4,7 @@ import TransactionModal from './TransactionModal';
 import CreateAccountModal from './CreateAccountModal';
 import TransactionTable from './TransactionTable';
 
-const Dashboard = ({ onLogout }) => {
+const Dashboard = ({ onLogout, role, userInfo }) => {
     const [accounts, setAccounts] = useState([]);
     const [activeAccountIdx, setActiveAccountIdx] = useState(0);
     const [transactions, setTransactions] = useState([]);
@@ -17,8 +17,7 @@ const Dashboard = ({ onLogout }) => {
     // 1. Fetch User & Accounts on Mount
     const fetchData = async () => {
         try {
-            const userData = JSON.parse(localStorage.getItem('banka_user'));
-            setUser(userData);
+            setUser(userInfo);
             const data = await bankService.getMyAccounts();
             setAccounts(data);
         } catch (err) {
@@ -117,7 +116,7 @@ const Dashboard = ({ onLogout }) => {
             <main className="main-content">
                 <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', width: '100%', maxWidth: '1000px' }}>
                     <div>
-                        <h1 style={{ fontSize: '32px' }}>Hola, <span style={{ color: 'var(--primary)' }}>{user?.firstName || user?.email?.split('@')[0] || 'Usuario'}</span>! 👋</h1>
+                        <h1 style={{ fontSize: '32px' }}>Hola, <span style={{ color: 'var(--primary)' }}>{userInfo?.given_name || userInfo?.name || 'Usuario'}</span>! 👋</h1>
                         <p style={{ color: 'var(--text-dim)' }}>Gestiona tu dinero con seguridad y estilo.</p>
                     </div>
                 </header>
@@ -189,7 +188,7 @@ const Dashboard = ({ onLogout }) => {
                             >
                                 {activeAccount.active ? 'Nueva Transferencia' : 'Cuenta Bloqueada'}
                             </button>
-                            {user?.role !== 'USER' && (
+                            {role === 'ADMIN' && (
                                 <button className="btn-primary" onClick={() => handleOpenModal('deposit')} style={{ padding: '20px', fontSize: '16px', background: 'var(--accent)', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)' }}>
                                     Hacer Depósito
                                 </button>

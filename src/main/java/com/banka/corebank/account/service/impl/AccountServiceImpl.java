@@ -12,7 +12,11 @@ import com.banka.corebank.customer.entity.Customer;
 import com.banka.corebank.customer.repository.CustomerRepository;
 import com.banka.corebank.exception.ResourceNotFoundException;
 import com.banka.corebank.user.entity.User;
-import com.banka.corebank.user.repository.UserRepository;
+import com.banka.corebank.user.enums.UserRole;
+import com.banka.corebank.user.service.UserService;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,25 +33,24 @@ public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
     private final CustomerRepository customerRepository;
-    private final UserRepository userRepository; // Added
+    private final UserService userService;
     private final AccountMapper accountMapper;
     private final Random random = new Random();
 
     public AccountServiceImpl(AccountRepository accountRepository,
             CustomerRepository customerRepository,
-            UserRepository userRepository, // Added
+            @Lazy UserService userService,
             AccountMapper accountMapper) {
         this.accountRepository = accountRepository;
         this.customerRepository = customerRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
         this.accountMapper = accountMapper;
     }
 
     @Override
-    @Transactional(readOnly = true)
+    @Transactional
     public List<AccountResponse> getMyAccounts(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = userService.syncWithKeycloak(email, null, getCurrentUserRole());
 
         if (user.getCustomer() == null) {
             return List.of();
@@ -90,8 +93,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public AccountResponse createNewAccountForUser(String email, CreateAccountRequest request) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User user = userService.syncWithKeycloak(email, null, getCurrentUserRole());
 
         if (user.getCustomer() == null) {
             throw new RuntimeException("User has no associated customer profile");
@@ -151,5 +153,14 @@ public class AccountServiceImpl implements AccountService {
                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
         account.setActive(true);
         accountRepository.save(account);
+    }
+
+    private UserRole getCurrentUserRole() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"))) {
+            return UserRole.ADMIN;
+        }
+        return UserRole.USER;
     }
 }

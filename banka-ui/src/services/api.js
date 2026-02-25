@@ -1,3 +1,5 @@
+import keycloak from '../keycloak';
+
 const API_URL = 'http://localhost:8080/api/v1';
 
 async function buildApiError(response) {
@@ -17,55 +19,16 @@ async function buildApiError(response) {
 }
 
 export const authService = {
-    async login(email, password) {
-        const response = await fetch(`${API_URL}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-        });
-
-        if (!response.ok) {
-            throw await buildApiError(response);
-        }
-
-        const data = await response.json();
-        if (data.token) {
-            localStorage.setItem('banka_token', data.token);
-            localStorage.setItem('banka_user', JSON.stringify(data));
-        }
-        return data;
-    },
-
-    async register(userData) {
-        const response = await fetch(`${API_URL}/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(userData),
-        });
-
-        if (!response.ok) {
-            throw await buildApiError(response);
-        }
-
-        const data = await response.json();
-        if (data.token) {
-            localStorage.setItem('banka_token', data.token);
-            localStorage.setItem('banka_user', JSON.stringify(data));
-        }
-        return data;
-    },
-
     logout() {
-        localStorage.removeItem('banka_token');
-        localStorage.removeItem('banka_user');
+        keycloak.logout();
     },
 
     getToken() {
-        return localStorage.getItem('banka_token');
+        return keycloak.token;
     },
 
     isAuthenticated() {
-        return !!this.getToken();
+        return !!keycloak.token;
     }
 };
 

@@ -52,9 +52,10 @@ public class TransactionServiceImpl implements TransactionService {
         @Transactional
         public List<TransactionResponse> transfer(TransferRequest request, String userEmail) {
                 // 1. Find Actors (Data Fetching)
-                Account sourceAccount = accountRepository.findByAccountNumber(request.sourceAccountNumber())
+                Account sourceAccount = accountRepository.findByAccountNumberWithLock(request.sourceAccountNumber())
                                 .orElseThrow(() -> new ResourceNotFoundException("Source account not found"));
-                Account destinationAccount = accountRepository.findByAccountNumber(request.destinationAccountNumber())
+                Account destinationAccount = accountRepository
+                                .findByAccountNumberWithLock(request.destinationAccountNumber())
                                 .orElseThrow(() -> new ResourceNotFoundException("Destination account not found"));
 
                 // Use JIT Provisioning to ensure user exists
@@ -136,7 +137,7 @@ public class TransactionServiceImpl implements TransactionService {
         @Transactional
         public TransactionResponse deposit(DepositRequest request, String userEmail) {
                 // 1. Find Actors
-                Account account = accountRepository.findByAccountNumber(request.accountNumber())
+                Account account = accountRepository.findByAccountNumberWithLock(request.accountNumber())
                                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
                 User performer = userService.syncWithKeycloak(userEmail, null, getCurrentUserRole());
 

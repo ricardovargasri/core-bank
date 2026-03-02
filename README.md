@@ -1,134 +1,80 @@
-# Core Bank Project
+# Core Bank Project 🏦
 
-Este proyecto es un sistema de **Core Bancario** desarrollado con Spring Boot, diseñado para simular operaciones financieras reales bajo una arquitectura **Monolítica Modular** limpia y escalable.
+Este proyecto es un sistema de **Core Bancario** de alto desempeño desarrollado con **Spring Boot**, diseñado para simular operaciones financieras reales con un enfoque crítico en la **integridad de datos**, **seguridad robusta** y **escalabilidad**.
 
-## 🏗 Arquitectura
+## ✨ Características Principales
 
-El sistema sigue el patrón de **Capas (Layered Architecture)** para separar responsabilidades:
+### 1. Seguridad Empresarial con Keycloak 🔐
+*   **Identidad Centralizada**: Integración completa con **Keycloak** (OIDC/OAuth2) como Identity Provider.
+*   **JIT Provisioning**: Los usuarios se sincronizan automáticamente con la base de datos local en su primer login, creando su perfil de `Customer` y su primera `Account` de ahorros de forma transparente.
+*   **RBAC (Role Based Access Control)**: Roles de `ADMIN`, `TELLER` y `USER` sincronizados desde Keycloak para control de acceso granular en endpoints y UI.
 
-1.  **Controller (API Layer)**: Recibe las peticiones HTTP (JSON) y usa **DTOs** (Request/Response) para comunicarse con el exterior.
-2.  **Service (Business Layer)**: Contiene la lógica de negocio (validaciones, cálculos, orquestación). Usa **Mappers** para convertir DTOs a Entidades.
-3.  **Repository (Data Layer)**: Interactúa con la base de datos (PostgreSQL) usando Spring Data JPA.
-4.  **Entity (Domain Layer)**: Representa las tablas de la base de datos.
-5.  **DTO (Data Transfer Object)**: Objetos para el transporte de datos entre capas.
+### 2. Integridad Financiera y Concurrencia ⚖️
+*   **Pessimistic Locking**: Implementación de `@Lock(LockModeType.PESSIMISTIC_WRITE)` en las transacciones críticas (depósitos y transferencias) para evitar "Lost Updates" en escenarios de alta concurrencia.
+*   **Transaccionalidad ACID**: Asegura que las transferencias entre cuentas sean atómicas; o se completan ambos lados (débito/crédito) o no se hace nada.
 
-## 📊 Flujo de Datos y Arquitectura
+### 3. Rendimiento Optimizado 🚀
+*   **Entity Graphs**: Uso de `@EntityGraph` y `JOIN FETCH` para eliminar el problema de las consultas N+1, logrando que el dashboard se cargue con una sola consulta SQL optimizada.
+*   **UUIDs**: Uso de identificadores universales para seguridad y facilidad de escalabilidad horizontal.
+
+## 📊 Arquitectura del Sistema
 
 ```mermaid
 graph TD
-    User((Usuario/API Client)) -->|JSON| Controller[Controllers]
-    Controller -->|DTO| Service[Services]
-    Service -->|Entities| Repository[Repositories]
-    Repository -->|SQL| DB[(PostgreSQL)]
+    User((Usuario/Client)) -->|JWT| API[Core Bank API]
+    API -->|Valida| KC[Keycloak Server]
+    API -->|Pessimistic Lock| DB[(Postgres DB)]
+    KC -->|Sincroniza| API
     
-    Service -.->|Usa| Mapper[Mappers]
-    CustomerService -->|Orquesta| AccountService[AccountService]
+    subgraph "Infraestructura (Docker)"
+    KC
+    DB
+    end
 ```
 
-## 📖 Documentación Interactiva (Swagger)
+## 🧪 Pruebas de Estrés (Stress Testing)
 
-El proyecto cuenta con **Swagger UI** para explorar y probar los endpoints de forma interactiva.
+El sistema ha sido verificado usando **Apache JMeter** para garantizar estabilidad bajo carga:
 
-*   **URL**: `http://localhost:8080/swagger-ui.html`
-*   **Vistazo rápido**: Podrás ver los modelos de datos (DTOs) y ejecutar peticiones directamente desde el navegador.
-
-## 🚀 Módulos y Funcionalidades Logradas
-
-### 1. Customer (Clientes)
-*   **Identidad**: Gestiona información personal con campos obligatorios y únicos (`name`, `email`, `documentId`).
-*   **API**: Implementación total con DTOs y Mappers.
-*   **Integración**: Al registrar un cliente, se dispara automáticamente la creación de su primera cuenta.
-
-### 2. Account (Cuentas)
-*   **Tipos**: Soporte para `SAVINGS` y `CHECKING` mediante Enums.
-*   **Seguridad y Reglas**:
-    *   Generación de números de cuenta únicos de **4 dígitos**.
-    *   **Restricción de tiempo**: 5 días para Ahorros y 24 horas para Corrientes.
-*   **Transaccionalidad**: Uso de `@Transactional` para asegurar la integridad registro-cuenta.
-
-### 3. User & Auth (Seguridad)
-*   **RBAC (Role Based Access Control)**: Diferenciación entre `ADMIN`, `TELLER` y `USER`.
-*   **JWT (JSON Web Token)**: Implementación completa de autenticación stateless con Access y Refresh Tokens.
-*   **BCrypt**: Encriptación profesional de contraseñas.
-*   **Relación User-Customer**: Separación de credenciales (User) y datos de negocio (Customer) con vinculación `1:1`.
-
-### 5. Políticas de Contraseñas Más Estrictas (Backend + Frontend)
-
-#### Backend
-*   **Validador centralizado**: `PasswordValidator` (Passay) validando en el flujo de registro antes de encriptar con BCrypt.
-*   **Reglas de contraseña**:
-    *   Longitud: **12 a 128** caracteres
-    *   Al menos **1** mayúscula, **1** minúscula, **1** número y **1** carácter especial
-    *   Sin espacios en blanco
-    *   Bloqueo de secuencias comunes (teclado `qwerty` y secuencias numéricas)
-*   **Excepción custom**: `InvalidPasswordException` (hereda de `BusinessException`).
-*   **Validación declarativa**: `@Valid` en `AuthController` y anotaciones de Bean Validation en `RegisterRequest`/`LoginRequest`.
-*   **Manejo consistente de errores (400)**:
-    *   `BusinessException` => `400 BAD_REQUEST` con `message`
-    *   `MethodArgumentNotValidException` => `400 BAD_REQUEST` con `message` y lista `errors[]` por campo
-
-#### Frontend (banka-ui)
-*   **Interpretación de errores del backend**:
-    *   Se conserva `message` y, cuando aplica, el arreglo `errors[]`.
-*   **UI de errores por campo**:
-    *   En `Register` y `Login` se muestran mensajes debajo de cada input según `errors[]`.
-    *   Si el error es general (ej. contraseña no cumple Passay), se muestra el `message` del backend.
-
-## ▶️ Cómo correr el Frontend (banka-ui)
-
-1. Instalar dependencias (solo la primera vez)
-
-    ```bash
-    cd banka-ui
-    npm install
-    ```
-
-2. Levantar Vite
-
-    ```bash
-    npm run dev
-    ```
-
-3. Abrir en el navegador
-
-    *   `http://localhost:5173`
-
-4. Requisito
-
-    *   Backend corriendo en `http://localhost:8080`
-
-### 4. Admin & Teller Dashboard (Nuevo 🚀)
-*   **Búsqueda Global**: Localización de clientes por email, nombre o número de cuenta.
-*   **Operaciones de Caja**:
-    *   **Depósitos**: Interfaz exclusiva para Cajeros/Admins para realizar ingresos.
-    *   **Historial**: Visualización completa de movimientos de cualquier cuenta.
-*   **Gestión de Estados**:
-    *   **Bloqueo/Desbloqueo**: Funcionalidad para congelar cuentas instantáneamente.
-    *   **Seguridad Reforzada**: El backend rechaza *cualquier* transacción (entrante o saliente) en cuentas bloqueadas.
-*   **UI Reactiva**:
-    *   Indicadores visuales de estado (Grayscale para cuentas bloqueadas).
-    *   Botones de acción contextuales.
-
-## 🛡 Roadmap y Próximos Pasos
-
-1.  **Reportes Avanzados**: Exportación de extractos en PDF.
-2.  **Notificaciones**: Alertas por email ante movimientos sospechosos.
-3.  **Mejoras de Seguridad**:
-    - [ ] Implementar políticas de contraseñas más estrictas
-    - [ ] Agregar autenticación de dos factores (2FA)
-    - [ ] Implementar flujo de recuperación de contraseña seguro
-    - [ ] Añadir registro detallado de actividades de autenticación
-    - [ ] Implementar rate limiting en endpoints sensibles
-    - [ ] Añadir lista negra de tokens JWT
-    - [ ] Mejorar mensajes de error para evitar fuga de información
-    - [ ] Implementar detección de patrones sospechosos de inicio de sesión
-    - [ ] Añadir verificación de correo electrónico en el registro
-    - [ ] Implementar gestión de sesiones y dispositivos
+*   **Escenario de Lectura (50 usuarios)**: 0% errores, latencia promedio de ~1.3s con carga de choque.
+*   **Escenario de Escritura (100 transferencias concurrentes)**: 
+    *   **Resultado**: ✅ 100% Integridad.
+    *   **Verificación**: Se verificó mediante logs de Hibernate el uso de `FOR UPDATE` y la precisión matemática de los saldos finales post-estrés.
 
 ## 🛠 Tecnologías
-*   **Java 17**
-*   **Spring Boot 3**
-*   **Spring Security**
-*   **JJWT (JSON Web Token)**
+*   **Java 17** & **Spring Boot 3**
+*   **Spring Security** (OAuth2 Resource Server)
+*   **Keycloak** (Identity & Access Management)
+*   **Hibernate / Spring Data JPA**
 *   **PostgreSQL**
-*   **Lombok** & **Records**
+*   **Docker & Docker Compose**
+*   **Apache JMeter** (Performance Testing)
+
+## 🚀 Cómo empezar
+
+### 1. Requisitos
+*   Docker y Docker Compose.
+*   Java 17+.
+*   Maven.
+
+### 2. Levantar Infraestructura
+```bash
+docker compose up -d
+```
+Esto iniciará Keycloak y PostgreSQL con volúmenes persistentes.
+
+### 3. Configurar Keycloak
+El sistema espera un Realm llamado `BankaRealm` y un cliente `banka-client`. El usuario inicial es `admin` / `admin`.
+
+### 4. Ejecutar el Backend
+```bash
+mvn spring-boot:run
+```
+
+### 5. Probar con JMeter
+Importa los archivos `.jmx` incluidos en el repositorio para replicar las pruebas de estrés:
+*   `stress_test.jmx`: Prueba de lectura (Dashboard).
+*   `transfer_stress_test.jmx`: Prueba de escritura (Transferencias masivas).
+
+---
+Desarrollado con ❤️ para simular un entorno bancario real y seguro.

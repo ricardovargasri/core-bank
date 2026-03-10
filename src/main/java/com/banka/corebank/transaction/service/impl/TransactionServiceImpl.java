@@ -16,6 +16,8 @@ import com.banka.corebank.user.entity.User;
 import com.banka.corebank.user.enums.UserRole;
 import com.banka.corebank.user.service.UserService;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -194,6 +196,20 @@ public class TransactionServiceImpl implements TransactionService {
 
         @Override
         @Transactional(readOnly = true)
+        public Page<TransactionResponse> getAccountHistory(String accountNumber, String userEmail, Pageable pageable) {
+                Account account = accountRepository.findByAccountNumber(accountNumber)
+                                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+
+                if (!account.getCustomer().getEmail().equals(userEmail)) {
+                        throw new BusinessException("You are not authorized to view this account history");
+                }
+
+                return transactionRepository.findAllByAccountOrderByCreatedAtDesc(account, pageable)
+                                .map(tx -> transactionMapper.toResponse(tx, account.getBalance()));
+        }
+
+        @Override
+        @Transactional(readOnly = true)
         public List<TransactionResponse> getAccountHistoryForAdmin(String accountNumber) {
                 Account account = accountRepository.findByAccountNumber(accountNumber)
                                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
@@ -203,6 +219,16 @@ public class TransactionServiceImpl implements TransactionService {
                                 .stream()
                                 .map(tx -> transactionMapper.toResponse(tx, account.getBalance()))
                                 .toList();
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public Page<TransactionResponse> getAccountHistoryForAdmin(String accountNumber, Pageable pageable) {
+                Account account = accountRepository.findByAccountNumber(accountNumber)
+                                .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
+
+                return transactionRepository.findAllByAccountOrderByCreatedAtDesc(account, pageable)
+                                .map(tx -> transactionMapper.toResponse(tx, account.getBalance()));
         }
 
         private UserRole getCurrentUserRole() {

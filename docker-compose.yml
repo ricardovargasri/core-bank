@@ -1,15 +1,17 @@
 version: '3.8'
 
 services:
-  keycloak-db:
+  postgres:
     image: postgres:15
-    container_name: keycloak-db
+    container_name: postgres-db
     environment:
-      POSTGRES_DB: keycloak
-      POSTGRES_USER: keycloak
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U keycloak" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -17,16 +19,17 @@ services:
       - bank-network
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh
 
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
     container_name: keycloak
-    command: start-dev
+    command: start-dev --import-realm -Dkeycloak.import.strategy=OVERWRITE_EXISTING
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
-      KC_DB_USERNAME: keycloak
-      KC_DB_PASSWORD: password
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: admin123
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
       KEYCLOAK_ADMIN: admin
@@ -34,10 +37,12 @@ services:
     ports:
       - "7080:8080"
     depends_on:
-      keycloak-db:
+      postgres:
         condition: service_healthy
     networks:
       - bank-network
+    volumes:
+      - ./realm-export.json:/opt/keycloak/data/import/realm-export.json
 
 networks:
   bank-network:

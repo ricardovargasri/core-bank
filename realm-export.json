@@ -1,0 +1,57 @@
+{
+  "realm": "BankaRealm",
+  "enabled": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "ADMIN",
+        "description": "Administrator Role"
+      },
+      {
+        "name": "TELLER",
+        "description": "Teller Role"
+      },
+      {
+        "name": "USER",
+        "description": "Standard User Role"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "banka-client",
+      "enabled": true,
+      "publicClient": true,
+      "protocol": "openid-connect",
+      "rootUrl": "http://localhost:5173",
+      "baseUrl": "http://localhost:5173",
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173"
+      ],
+      "fullScopeAllowed": true,
+      "directAccessGrantsEnabled": true
+    }
+  ],
+  "users": [
+    {
+      "username": "admin_banka",
+      "enabled": true,
+      "email": "admin@banka.com",
+      "firstName": "Admin",
+      "lastName": "User",
+      "realmRoles": [
+        "ADMIN"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,14 +32,24 @@ public class TransactionController {
     public ResponseEntity<TransactionResponse> deposit(
             @RequestBody DepositRequest request,
             Authentication authentication) {
-        return ResponseEntity.ok(transactionService.deposit(request, authentication.getName()));
+        String fullName = getFullName(authentication);
+        return ResponseEntity.ok(transactionService.deposit(request, authentication.getName(), fullName));
     }
 
     @PostMapping("/transfer")
     public ResponseEntity<List<TransactionResponse>> transfer(
             @RequestBody TransferRequest request,
             Authentication authentication) {
-        return ResponseEntity.ok(transactionService.transfer(request, authentication.getName()));
+        String fullName = getFullName(authentication);
+        return ResponseEntity.ok(transactionService.transfer(request, authentication.getName(), fullName));
+    }
+
+    private String getFullName(Authentication authentication) {
+        if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwt = (JwtAuthenticationToken) authentication;
+            return (String) jwt.getTokenAttributes().get("name");
+        }
+        return null;
     }
 
     @GetMapping("/history/{accountNumber}")

@@ -9,6 +9,8 @@ import com.banka.corebank.user.service.UserService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -70,17 +72,19 @@ public class AdminController {
     @org.springframework.web.bind.annotation.PostMapping("/deposit")
     public ResponseEntity<com.banka.corebank.transaction.dto.response.TransactionResponse> deposit(
             @org.springframework.web.bind.annotation.RequestBody com.banka.corebank.transaction.dto.request.DepositRequest request) {
-        // En un escenario real, el admin podría hacer depositos.
-        // Reutilizamos la logica, asumiendo que el admin es quien ejecuta.
-        // Ojo: TransactionService.deposit espera el email del usuario que hace la
-        // accion.
-        // Aqui pasamos el del admin (autenticado) o podriamos pasar null si la logica
-        // lo permite.
+        Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication();
+        String adminEmail = auth.getName();
+        String fullName = getFullName(auth);
 
-        // Recuperamos el email del admin del contexto de seguridad
-        String adminEmail = org.springframework.security.core.context.SecurityContextHolder.getContext()
-                .getAuthentication().getName();
+        return ResponseEntity.ok(transactionService.deposit(request, adminEmail, fullName));
+    }
 
-        return ResponseEntity.ok(transactionService.deposit(request, adminEmail));
+    private String getFullName(Authentication authentication) {
+        if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwt = (JwtAuthenticationToken) authentication;
+            return (String) jwt.getTokenAttributes().get("name");
+        }
+        return null;
     }
 }

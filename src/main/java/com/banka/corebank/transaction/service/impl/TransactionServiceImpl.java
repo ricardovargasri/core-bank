@@ -52,7 +52,7 @@ public class TransactionServiceImpl implements TransactionService {
 
         @Override
         @Transactional
-        public List<TransactionResponse> transfer(TransferRequest request, String userEmail) {
+        public List<TransactionResponse> transfer(TransferRequest request, String userEmail, String fullName) {
                 // 1. Find Actors (Data Fetching)
                 Account sourceAccount = accountRepository.findByAccountNumberWithLock(request.sourceAccountNumber())
                                 .orElseThrow(() -> new ResourceNotFoundException("Source account not found"));
@@ -61,7 +61,7 @@ public class TransactionServiceImpl implements TransactionService {
                                 .orElseThrow(() -> new ResourceNotFoundException("Destination account not found"));
 
                 // Use JIT Provisioning to ensure user exists
-                User performer = userService.syncWithKeycloak(userEmail, null, getCurrentUserRole());
+                User performer = userService.syncWithKeycloak(userEmail, fullName, getCurrentUserRole());
 
                 // 2. Functional Validations
                 List<ValidationRule<Void>> validators = List.of(
@@ -137,11 +137,11 @@ public class TransactionServiceImpl implements TransactionService {
 
         @Override
         @Transactional
-        public TransactionResponse deposit(DepositRequest request, String userEmail) {
+        public TransactionResponse deposit(DepositRequest request, String userEmail, String fullName) {
                 // 1. Find Actors
                 Account account = accountRepository.findByAccountNumberWithLock(request.accountNumber())
                                 .orElseThrow(() -> new ResourceNotFoundException("Account not found"));
-                User performer = userService.syncWithKeycloak(userEmail, null, getCurrentUserRole());
+                User performer = userService.syncWithKeycloak(userEmail, fullName, getCurrentUserRole());
 
                 // 2. Functional Validations
                 List<ValidationRule<Void>> validators = List.of(

@@ -3,6 +3,7 @@ import './App.css'
 import keycloak from './keycloak'
 import Dashboard from './components/Dashboard'
 import AdminDashboard from './components/AdminDashboard'
+import Landing from './components/Landing'
 
 function App() {
   const [authenticated, setAuthenticated] = useState(false)
@@ -12,8 +13,9 @@ function App() {
 
   useEffect(() => {
     keycloak.init({
-      onLoad: 'login-required',
-      checkLoginIframe: false
+      onLoad: 'check-sso',
+      checkLoginIframe: false,
+      silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html'
     }).then((auth) => {
       setAuthenticated(auth)
       setInit(true)
@@ -41,7 +43,7 @@ function App() {
   }
 
   if (!authenticated) {
-    return <div className="error-screen">No se pudo autenticar con el servidor de identidad.</div>
+    return <Landing />
   }
 
   return (
@@ -51,6 +53,7 @@ function App() {
           onLogout={handleLogout}
           role={role}
           userInfo={keycloak.tokenParsed}
+          onGoToAdmin={() => setView('admin-dashboard')}
         />
       )}
       {view === 'admin-dashboard' && (

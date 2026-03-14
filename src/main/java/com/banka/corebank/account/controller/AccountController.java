@@ -6,6 +6,7 @@ import com.banka.corebank.account.service.AccountService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,7 +24,8 @@ public class AccountController {
 
     @GetMapping("/me")
     public ResponseEntity<List<AccountResponse>> getMyAccounts(Authentication authentication) {
-        return ResponseEntity.ok(accountService.getMyAccounts(authentication.getName()));
+        String fullName = getFullName(authentication);
+        return ResponseEntity.ok(accountService.getMyAccounts(authentication.getName(), fullName));
     }
 
     @PostMapping("/customer/{customerId}")
@@ -37,7 +39,16 @@ public class AccountController {
     public ResponseEntity<AccountResponse> createNewAccountForMe(
             Authentication authentication,
             @RequestBody CreateAccountRequest request) {
-        return new ResponseEntity<>(accountService.createNewAccountForUser(authentication.getName(), request),
+        String fullName = getFullName(authentication);
+        return new ResponseEntity<>(accountService.createNewAccountForUser(authentication.getName(), fullName, request),
                 HttpStatus.CREATED);
+    }
+
+    private String getFullName(Authentication authentication) {
+        if (authentication instanceof JwtAuthenticationToken) {
+            JwtAuthenticationToken jwt = (JwtAuthenticationToken) authentication;
+            return (String) jwt.getTokenAttributes().get("name");
+        }
+        return null;
     }
 }

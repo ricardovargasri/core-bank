@@ -53,6 +53,20 @@ export const bankService = {
         return response.json();
     },
 
+    async getAdminTransactions(accountNumber) {
+        const response = await fetch(`${API_URL}/admin/accounts/${accountNumber}/transactions`, {
+            headers: {
+                'Authorization': `Bearer ${authService.getToken()}`,
+            },
+        });
+        if (!response.ok) {
+            if (response.status === 404) return [];
+            throw new Error('Could not fetch admin transactions');
+        }
+        const data = await response.json();
+        return Array.isArray(data) ? data : (data.content || []);
+    },
+
     async adminDeposit(data) {
         const response = await fetch(`${API_URL}/admin/deposit`, {
             method: 'POST',
@@ -117,14 +131,20 @@ export const bankService = {
         return response.json();
     },
 
-    async getTransactions(accountNumber) {
-        const response = await fetch(`${API_URL}/transactions/account/${accountNumber}`, {
+    async getTransactions(accountNumber, page = 0, size = 50) {
+        const response = await fetch(`${API_URL}/transactions/history/${accountNumber}?page=${page}&size=${size}`, {
             headers: {
                 'Authorization': `Bearer ${authService.getToken()}`,
             },
         });
-        if (!response.ok) throw new Error('Could not fetch transactions');
-        return response.json();
+        if (!response.ok) {
+            // Return empty array instead of throwing — no transactions is not an error
+            if (response.status === 404) return [];
+            throw new Error('Could not fetch transactions');
+        }
+        const data = await response.json();
+        // Backend returns a Page object with .content array
+        return data.content || data || [];
     },
 
     async deactivateAccount(accountId) {

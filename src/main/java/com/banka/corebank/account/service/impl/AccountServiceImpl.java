@@ -49,8 +49,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public List<AccountResponse> getMyAccounts(String email) {
-        User user = userService.syncWithKeycloak(email, null, getCurrentUserRole());
+    public List<AccountResponse> getMyAccounts(String email, String fullName) {
+        User user = userService.syncWithKeycloak(email, fullName, getCurrentUserRole());
 
         if (user.getCustomer() == null) {
             return List.of();
@@ -92,8 +92,8 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public AccountResponse createNewAccountForUser(String email, CreateAccountRequest request) {
-        User user = userService.syncWithKeycloak(email, null, getCurrentUserRole());
+    public AccountResponse createNewAccountForUser(String email, String fullName, CreateAccountRequest request) {
+        User user = userService.syncWithKeycloak(email, fullName, getCurrentUserRole());
 
         if (user.getCustomer() == null) {
             throw new RuntimeException("User has no associated customer profile");

@@ -28,16 +28,16 @@ const AdminDashboard = ({ onLogout, onGoToPersonal }) => {
     }, []);
 
     const handleViewHistory = async (account) => {
+        setSelectedAccount(account);
+        setDepositMode(false);
         try {
-            setSelectedAccount(account);
-            const txs = await bankService.getTransactions(account.accountNumber);
-            setTransactions(txs);
-            setShowHistory(true);
-            setDepositMode(false);
+            const txs = await bankService.getAdminTransactions(account.accountNumber);
+            setTransactions(Array.isArray(txs) ? txs : []);
         } catch (error) {
             console.error("Error fetching history:", error);
-            alert("No se pudo cargar el historial.");
+            setTransactions([]); // Show empty table, not an error
         }
+        setShowHistory(true);
     };
 
     const handlePrepareDeposit = (account) => {

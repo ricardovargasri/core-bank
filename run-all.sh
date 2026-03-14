@@ -11,6 +11,10 @@ echo -e "${BLUE}🚀 Iniciando infraestructura de Core Bank...${NC}"
 echo -e "${GREEN}🐳 Iniciando Docker (Postgres & Keycloak)...${NC}"
 docker compose up -d
 
+# 1.5 Configurar Keycloak (habilitar registro de usuarios)
+echo -e "${GREEN}🔧 Configurando Keycloak...${NC}"
+./configure-keycloak.sh &
+
 # 2. Iniciar Backend (Spring Boot)
 echo -e "${GREEN}☕ Iniciando Backend (Spring Boot)...${NC}"
 # Usamos & para correrlo en segundo plano y redirigimos logs mínimos

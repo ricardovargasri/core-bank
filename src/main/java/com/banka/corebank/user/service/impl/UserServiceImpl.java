@@ -112,9 +112,21 @@ public class UserServiceImpl implements UserService {
                                         return userRepository.save(newUser);
                                 });
 
-                // 2. Synchronize Role if it has changed in Keycloak
+                // 2. Synchronize Role and Name if they have changed or are defaults
+                boolean updated = false;
                 if (role != null && user.getRole() != role) {
                         user.setRole(role);
+                        updated = true;
+                }
+
+                if (fullName != null && user.getCustomer() != null &&
+                                ("Nuevo Usuario".equals(user.getCustomer().getName()) || !fullName.equals(user.getCustomer().getName()))) {
+                        user.getCustomer().setName(fullName);
+                        customerRepository.save(user.getCustomer());
+                        updated = true;
+                }
+
+                if (updated) {
                         return userRepository.save(user);
                 }
 

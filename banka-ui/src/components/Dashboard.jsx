@@ -4,7 +4,7 @@ import TransactionModal from './TransactionModal';
 import CreateAccountModal from './CreateAccountModal';
 import TransactionTable from './TransactionTable';
 
-const Dashboard = ({ onLogout, role, userInfo }) => {
+const Dashboard = ({ onLogout, role, userInfo, onGoToAdmin }) => {
     const [accounts, setAccounts] = useState([]);
     const [activeAccountIdx, setActiveAccountIdx] = useState(0);
     const [transactions, setTransactions] = useState([]);
@@ -13,6 +13,7 @@ const Dashboard = ({ onLogout, role, userInfo }) => {
     const [modalConfig, setModalConfig] = useState({ isOpen: false, type: 'deposit' });
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [showBalance, setShowBalance] = useState(true);
+    const [showTransactions, setShowTransactions] = useState(false);
 
     // 1. Fetch User & Accounts on Mount
     const fetchData = async () => {
@@ -119,6 +120,27 @@ const Dashboard = ({ onLogout, role, userInfo }) => {
                         <h1 style={{ fontSize: '32px' }}>Hola, <span style={{ color: 'var(--primary)' }}>{userInfo?.given_name || userInfo?.name || 'Usuario'}</span>! 👋</h1>
                         <p style={{ color: 'var(--text-dim)' }}>Gestiona tu dinero con seguridad y estilo.</p>
                     </div>
+
+                    <div style={{ minWidth: '220px' }}>
+                        <select
+                            className="input-field"
+                            value={activeAccountIdx}
+                            onChange={(e) => setActiveAccountIdx(parseInt(e.target.value))}
+                            style={{
+                                margin: 0,
+                                background: 'rgba(255,255,255,0.05)',
+                                color: 'white',
+                                border: '1px solid var(--glass-border)',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            {accounts.map((acc, idx) => (
+                                <option key={acc.id} value={idx} style={{ background: '#1a1a1a' }}>
+                                    {acc.type === 'SAVINGS' ? 'Ahorros' : 'Corriente'} - #{acc.accountNumber}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </header>
 
                 {loading ? (
@@ -189,15 +211,48 @@ const Dashboard = ({ onLogout, role, userInfo }) => {
                                 {activeAccount.active ? 'Nueva Transferencia' : 'Cuenta Bloqueada'}
                             </button>
                             {role === 'ADMIN' && (
-                                <button className="btn-primary" onClick={() => handleOpenModal('deposit')} style={{ padding: '20px', fontSize: '16px', background: 'var(--accent)', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)' }}>
-                                    Hacer Depósito
-                                </button>
+                                <>
+                                    <button className="btn-primary" onClick={() => handleOpenModal('deposit')} style={{ padding: '20px', fontSize: '16px', background: 'var(--accent)', boxShadow: '0 4px 15px rgba(59, 130, 246, 0.4)' }}>
+                                        Hacer Depósito
+                                    </button>
+                                    <button
+                                        className="btn-primary"
+                                        onClick={onGoToAdmin}
+                                        style={{
+                                            padding: '20px',
+                                            fontSize: '16px',
+                                            background: 'rgba(255,255,255,0.1)',
+                                            border: '1px solid var(--primary)',
+                                            marginTop: '10px'
+                                        }}
+                                    >
+                                        Volver al Listado de Usuarios
+                                    </button>
+                                </>
                             )}
                         </div>
 
-                        {/* Transactions Section */}
+                        {/* Transactions Section - Collapsible */}
                         <div className="glass-card" style={{ gridColumn: 'span 2' }}>
-                            <TransactionTable transactions={transactions} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <h3 style={{ margin: 0 }}>Historial de Movimientos</h3>
+                                <button
+                                    className="btn-primary"
+                                    onClick={() => setShowTransactions(!showTransactions)}
+                                    style={{
+                                        padding: '8px 18px',
+                                        fontSize: '13px',
+                                        background: showTransactions ? 'var(--error)' : 'var(--primary)'
+                                    }}
+                                >
+                                    {showTransactions ? '✖ Ocultar Historial' : '📋 Ver Historial'}
+                                </button>
+                            </div>
+                            {showTransactions && (
+                                <div style={{ marginTop: '20px' }}>
+                                    <TransactionTable transactions={transactions} />
+                                </div>
+                            )}
                         </div>
                     </div>
                 ) : (

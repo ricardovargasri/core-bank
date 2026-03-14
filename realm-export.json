@@ -1,6 +1,11 @@
 {
   "realm": "BankaRealm",
   "enabled": true,
+  "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
+  "verifyEmail": false,
+  "resetPasswordAllowed": true,
+  "rememberMe": true,
   "roles": {
     "realm": [
       {
@@ -49,6 +54,23 @@
         {
           "type": "password",
           "value": "admin123",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "maria",
+      "enabled": true,
+      "email": "maria@mail.com",
+      "firstName": "Maria",
+      "lastName": "Vargas",
+      "realmRoles": [
+        "USER"
+      ],
+      "credentials": [
+        {
+          "type": "password",
+          "value": "maria123",
           "temporary": false
         }
       ]

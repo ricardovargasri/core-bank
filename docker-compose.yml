@@ -24,7 +24,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
     container_name: keycloak
-    command: start-dev --import-realm -Dkeycloak.import.strategy=OVERWRITE_EXISTING
+    command: start-dev --import-realm --import-realm-strategy=OVERWRITE_EXISTING
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
@@ -34,6 +34,7 @@ services:
       KC_HTTP_ENABLED: "true"
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_IMPORT_STRATEGY: OVERWRITE_EXISTING
     ports:
       - "7080:8080"
     depends_on:
